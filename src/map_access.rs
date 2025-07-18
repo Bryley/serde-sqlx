@@ -3,14 +3,18 @@ use serde::ser::Error as _;
 
 use sqlx::{Column, Row};
 
-use crate::deserializers::{PgRowDeserializer, PgValueDeserializer};
+use crate::databases::Database;
+use crate::deserializers::{RowDeserializer, ValueDeserializer};
 
-pub(crate) struct PgRowMapAccess<'a> {
-    pub(crate) deserializer: PgRowDeserializer<'a>,
+pub(crate) struct RowMapAccess<'a, DB: Database> {
+    pub(crate) deserializer: RowDeserializer<'a, DB>,
     pub(crate) num_cols: usize,
 }
 
-impl<'de, 'a> MapAccess<'de> for PgRowMapAccess<'a> {
+impl<'de, 'a, DB: Database> MapAccess<'de> for RowMapAccess<'a, DB>
+where
+    usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+{
     type Error = DeError;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>, Self::Error>
@@ -35,10 +39,10 @@ impl<'de, 'a> MapAccess<'de> for PgRowMapAccess<'a> {
             .row
             .try_get_raw(self.deserializer.index)
             .map_err(DeError::custom)?;
-        let pg_type_deserializer = PgValueDeserializer { value };
+        let type_deserializer: ValueDeserializer<'_, DB> = ValueDeserializer { value };
 
         self.deserializer.index += 1;
 
-        seed.deserialize(pg_type_deserializer)
+        seed.deserialize(type_deserializer)
     }
 }

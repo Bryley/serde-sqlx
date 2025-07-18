@@ -1,10 +1,27 @@
 # serde-sqlx
 
-Allows deserializing Postgres rows into Rust types using `serde`. Work in progress.
+Allows deserializing rows into Rust types using `serde`. Work in progress.
 
 ## Implementation Status
 
-### Completed ✅
+| Feature | Postgres | MySQL | SQLite |
+| -------------- | --------------- | ------ | ----- |
+| Primitives | ✅ | ✅ | ❌ |
+| Structs | ✅ | ✅ | ❌ |
+| Tuples | ✅ | ✅ | ❌ |
+| Arrays | ✅ | - | - |
+| JSON | ✅ | ✅ | - |
+| UUID | ❌ | ❌ | ❌ |
+| Enums | ❌ | ❌ | ❌ |
+| chrono Date objects | ❌ | ❌ | ❌ |
+
+
+> [!NOTE]
+> ❌ = Planned or untested
+> - = Not applicable
+
+### Features
+
 - **Simple Primitives**:
   - Strings: TEXT, VARCHAR, BPCHAR
   - Booleans
@@ -30,21 +47,13 @@ Allows deserializing Postgres rows into Rust types using `serde`. Work in progre
   - Convert Postgres arrays into Rust vectors
   - Support for arrays of primitive types and nullable types
 
-### Planned/untested 📝
-- **Enums**:
-  - Support for Rust enums with Postgres enums or discriminated JSON
-- **Timestamps and Dates**:
-  - Testing for chrono and time types
-- **UUID**:
-  - Testing for uuid crate types
-
 ## Usage
 
 Add `serde-sqlx` to your Cargo.toml:
 
 ```toml
 [dependencies]
-serde-sqlx = "0.1"
+serde-sqlx = "1.0.0"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-native-tls"] }
 ```
@@ -74,7 +83,7 @@ async fn get_users(pool: &PgPool) -> anyhow::Result<Vec<User>> {
     ).fetch_all(pool).await?;
 
     let users: Result<Vec<_>, _> = rows.into_iter()
-        .map(serde_sqlx::from_pg_row)
+        .map(serde_sqlx::from_row)
         .collect();
 
     users.map_err(Into::into)

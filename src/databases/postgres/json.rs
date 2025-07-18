@@ -1,11 +1,11 @@
 use serde::{
-    de::{self, value::Error as DeError, Deserializer, Error, IntoDeserializer},
-    forward_to_deserialize_any,
+    de::{self, value::Error as DeError, Error as _, IntoDeserializer},
+    forward_to_deserialize_any, Deserializer,
 };
 use serde_json::Value;
 use sqlx::{
     postgres::{PgTypeInfo, PgValueRef},
-    Postgres, TypeInfo, ValueRef,
+    TypeInfo as _, ValueRef as _,
 };
 
 /// Decodes Postgres' JSON or JSONB into serde_json::Value
@@ -38,7 +38,7 @@ impl<'a> sqlx::Decode<'a, sqlx::Postgres> for PgJson {
     }
 }
 
-impl sqlx::Type<Postgres> for PgJson {
+impl sqlx::Type<sqlx::Postgres> for PgJson {
     fn type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("JSON")
     }
