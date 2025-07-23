@@ -29,6 +29,12 @@ impl Database for sqlx::MySql {
         let type_info = val_ref.type_info();
         let type_name = type_info.name();
 
+        // Handle enums
+        if deserializer.is_enum {
+            let v = decode_raw::<String, Self>(val_ref)?;
+            return visitor.visit_enum(v.into_deserializer());
+        }
+
         // Note this is pretty brittle and hacky, would love if the max_size was given in the
         // public API :/
         let max_size_one = format!("{type_info:?}").contains("max_size: Some(1)");

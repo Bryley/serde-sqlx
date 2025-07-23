@@ -10,6 +10,7 @@ mod deserializers;
 mod map_access;
 mod seq_access;
 
+/// Convenience function to deserialize a generic `sqlx::Row` into a serde Deserializable `T`
 pub fn from_row<DB, T>(row: <DB as sqlx::Database>::Row) -> Result<T, DeError>
 where
     DB: Database,

@@ -9,10 +9,11 @@ mod test_05_newtype_over_primitive;
 mod test_06_structs_with_prim_fields;
 mod test_07_structs_with_struct_fields;
 mod test_08_tuples_and_tuple_structs;
-mod test_10_same_type_columns_into_hashmap;
-mod test_11_record_with_flatten;
-mod test_12_structs_from_json;
-mod test_13_struct;
+mod test_09_same_type_columns_into_hashmap;
+mod test_10_record_with_flatten;
+mod test_11_structs_from_json;
+mod test_12_struct;
+mod test_13_enums;
 
 #[allow(unused)]
 pub async fn fetch_one<T: for<'de> serde::Deserialize<'de>>(query: &str) -> anyhow::Result<T> {

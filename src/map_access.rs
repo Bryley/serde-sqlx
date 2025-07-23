@@ -39,7 +39,10 @@ where
             .row
             .try_get_raw(self.deserializer.index)
             .map_err(DeError::custom)?;
-        let type_deserializer: ValueDeserializer<'_, DB> = ValueDeserializer { value };
+        let type_deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
+            value,
+            is_enum: false,
+        };
 
         self.deserializer.index += 1;
 

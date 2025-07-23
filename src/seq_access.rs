@@ -28,7 +28,10 @@ where
                 .map_err(DeError::custom)?;
 
             // Create a ValueDeserializer for the current column.
-            let value_deserializer: ValueDeserializer<'_, DB> = ValueDeserializer { value };
+            let value_deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
+                value,
+                is_enum: false,
+            };
 
             self.deserializer.index += 1;
 

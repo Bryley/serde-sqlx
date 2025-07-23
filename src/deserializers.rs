@@ -72,8 +72,10 @@ where
         }
 
         // Direct all "basic" types down to `ValueDeserializer`
-        let deserializer: ValueDeserializer<'_, DB> = ValueDeserializer { value: raw_value };
-
+        let deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
+            value: raw_value,
+            is_enum: false,
+        };
         deserializer.deserialize_any(visitor)
     }
 
@@ -162,17 +164,41 @@ where
         self.deserialize_map(visitor)
     }
 
+    fn deserialize_enum<V>(
+        self,
+        _name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        let raw_value = self.row.try_get_raw(self.index).map_err(DeError::custom)?;
+
+        if raw_value.is_null() {
+            return visitor.visit_none();
+        }
+
+        // Direct all "basic" types down to `ValueDeserializer`
+        let deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
+            value: raw_value,
+            is_enum: true,
+        };
+        deserializer.deserialize_any(visitor)
+    }
+
     // For other types, forward to deserialize_any.
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
         bytes byte_buf unit unit_struct
-        tuple_struct enum identifier ignored_any
+        tuple_struct identifier ignored_any
     }
 }
 
 /// An "inner" deserializer
 pub struct ValueDeserializer<'a, DB: Database> {
     pub(crate) value: <DB as sqlx::Database>::ValueRef<'a>,
+    pub(crate) is_enum: bool,
 }
 
 impl<'de, 'a, DB: Database> Deserializer<'de> for ValueDeserializer<'a, DB> {
@@ -199,10 +225,23 @@ impl<'de, 'a, DB: Database> Deserializer<'de> for ValueDeserializer<'a, DB> {
         DB::deserialize_value(self, visitor)
     }
 
+    fn deserialize_enum<V>(
+        mut self,
+        _name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        self.is_enum = true;
+        self.deserialize_any(visitor)
+    }
+
     // For other types, forward to deserialize_any.
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
         bytes byte_buf unit unit_struct newtype_struct struct
-        tuple_struct enum identifier ignored_any tuple seq map
+        tuple_struct identifier ignored_any tuple seq map
     }
 }
