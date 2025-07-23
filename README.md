@@ -13,7 +13,7 @@ Allows deserializing rows into Rust types using `serde`. Work in progress.
 | JSON | ✅ | ✅ | - |
 | UUID | ❌ | ❌ | ❌ |
 | Enums | ❌ | ✅ | ❌ |
-| chrono Date objects | ❌ | ❌ | ❌ |
+| chrono Date objects | ❌ | ✅ | ❌ |
 
 
 > [!NOTE]

@@ -116,7 +116,7 @@ impl Database for sqlx::MySql {
             }
             "DATETIME" | "TIMESTAMP" => {
                 let v = decode_raw::<chrono::NaiveDateTime, Self>(val_ref)?;
-                visitor.visit_string(v.to_string())
+                visitor.visit_string(v.format("%Y-%m-%dT%H:%M:%S%.6f").to_string())
             }
             "JSON" => {
                 let value = decode_raw::<serde_json::Value, Self>(val_ref)?;
