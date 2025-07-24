@@ -72,10 +72,7 @@ where
         }
 
         // Direct all "basic" types down to `ValueDeserializer`
-        let deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
-            value: raw_value,
-            is_enum: false,
-        };
+        let deserializer = ValueDeserializer::<'_, DB>::new(raw_value);
         deserializer.deserialize_any(visitor)
     }
 
@@ -180,25 +177,53 @@ where
         }
 
         // Direct all "basic" types down to `ValueDeserializer`
-        let deserializer: ValueDeserializer<'_, DB> = ValueDeserializer {
-            value: raw_value,
-            is_enum: true,
-        };
+        let mut deserializer = ValueDeserializer::<'_, DB>::new(raw_value);
+        deserializer.value_type = ValueType::Enum;
+        deserializer.deserialize_any(visitor)
+    }
+
+    fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        let raw_value = self.row.try_get_raw(self.index).map_err(DeError::custom)?;
+        if raw_value.is_null() {
+            return visitor.visit_none();
+        }
+
+        let mut deserializer = ValueDeserializer::<'_, DB>::new(raw_value);
+        deserializer.value_type = ValueType::Bool;
         deserializer.deserialize_any(visitor)
     }
 
     // For other types, forward to deserialize_any.
     forward_to_deserialize_any! {
-        bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
+        i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
         bytes byte_buf unit unit_struct
         tuple_struct identifier ignored_any
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum ValueType {
+    Any,
+    Enum,
+    Bool,
+}
+
 /// An "inner" deserializer
 pub struct ValueDeserializer<'a, DB: Database> {
     pub(crate) value: <DB as sqlx::Database>::ValueRef<'a>,
-    pub(crate) is_enum: bool,
+    pub(crate) value_type: ValueType,
+}
+
+impl<'a, DB: Database> ValueDeserializer<'a, DB> {
+    pub fn new(val: <DB as sqlx::Database>::ValueRef<'a>) -> Self {
+        Self {
+            value: val,
+            value_type: ValueType::Any,
+        }
+    }
 }
 
 impl<'de, 'a, DB: Database> Deserializer<'de> for ValueDeserializer<'a, DB> {
@@ -234,13 +259,21 @@ impl<'de, 'a, DB: Database> Deserializer<'de> for ValueDeserializer<'a, DB> {
     where
         V: Visitor<'de>,
     {
-        self.is_enum = true;
+        self.value_type = ValueType::Enum;
+        self.deserialize_any(visitor)
+    }
+
+    fn deserialize_bool<V>(mut self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        self.value_type = ValueType::Bool;
         self.deserialize_any(visitor)
     }
 
     // For other types, forward to deserialize_any.
     forward_to_deserialize_any! {
-        bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
+        i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
         bytes byte_buf unit unit_struct newtype_struct struct
         tuple_struct identifier ignored_any tuple seq map
     }

@@ -2,7 +2,7 @@
 name = "serde-sqlx"
 description = "Allows deserializing Postgres rows into Rust types using serde"
 authors = ["Vinícius R. Miguel <vini@tembo.io>"]
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 repository = "https://github.com/vrmiguel/serde-sqlx"
 readme = "README.md"

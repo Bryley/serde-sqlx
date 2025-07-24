@@ -1,4 +1,4 @@
-use crate::{decode_raw, deserializers::ValueDeserializer};
+use crate::{decode_raw, deserializers::{ValueDeserializer, ValueType}};
 use serde::de::{value::Error as DeError, Deserializer as _, Error, IntoDeserializer as _};
 use sqlx::{TypeInfo as _, ValueRef as _};
 
@@ -30,7 +30,7 @@ impl Database for sqlx::MySql {
         let type_name = type_info.name();
 
         // Handle enums
-        if deserializer.is_enum {
+        if deserializer.value_type == ValueType::Enum {
             let v = decode_raw::<String, Self>(val_ref)?;
             return visitor.visit_enum(v.into_deserializer());
         }
@@ -40,7 +40,7 @@ impl Database for sqlx::MySql {
         let max_size_one = format!("{type_info:?}").contains("max_size: Some(1)");
 
         // Handle booleans ahead of time as booleans in MySQL often come as an integer
-        if max_size_one {
+        if max_size_one || deserializer.value_type == ValueType::Bool {
             let v = decode_raw::<bool, Self>(val_ref)?;
             return visitor.visit_bool(v);
         }
