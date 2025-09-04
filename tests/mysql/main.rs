@@ -15,6 +15,7 @@ mod test_11_structs_from_json;
 mod test_12_struct;
 mod test_13_enums;
 mod test_14_chrono;
+mod test_15_json_value;
 
 #[allow(unused)]
 pub async fn fetch_one<T: for<'de> serde::Deserialize<'de>>(query: &str) -> anyhow::Result<T> {

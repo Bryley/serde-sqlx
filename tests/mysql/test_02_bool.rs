@@ -22,6 +22,16 @@ async fn t_unannotated_as_bool_opt() {
 }
 
 #[tokio::test]
+async fn t_unannotated_as_bool_opt_from_int() {
+    let rows =
+        fetch_all::<Option<bool>>("SELECT CAST(1 AS SIGNED) UNION ALL SELECT CAST(0 AS SIGNED) UNION ALL SELECT NULL")
+            .await
+            .unwrap();
+
+    assert_eq!(rows, [Some(true), Some(false), None])
+}
+
+#[tokio::test]
 async fn test_integer_as_bool_true() {
     let val: bool = fetch_one("SELECT 1").await.unwrap();
     assert!(val);
